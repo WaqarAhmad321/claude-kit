@@ -1,0 +1,3 @@
+# argon2 ships prebuilt binaries, so its node-gyp fallback build never needs to run.
+allowBuilds:
+  argon2: false

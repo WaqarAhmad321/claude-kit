@@ -1,0 +1,30 @@
+# <!-- fill: project name -->
+
+<!-- fill: two or three lines: what it is, who uses it, and the clients that call it (web, mobile app, partners). -->
+
+Claude Code gets the kit's rules globally, so they aren't repeated here. Every other coding agent in this repo (Codex, Cursor, Gemini CLI, OpenCode, Copilot) reads the same rules from `AGENTS.md`, generated from the kit's rules plus this file's own facts.
+
+## Layout
+<!-- fill: one line per top-level folder, app or package, and what it owns. -->
+
+## Rules for this repo
+<!-- fill: the invariants that hold everywhere in this repo, one line each, such as "every record is scoped by tenant". Delete this line when there are none yet. -->
+- Configuration comes from environment variables listed in `.env.example`. Secrets never go in code, docs, tests or settings files.
+- Tests run against the local test stack with paid API keys forced empty. Nobody tests against production.
+- Open work and status live on the PM board, never in repo files.
+
+## Module skills
+Each module keeps its rules in `.claude/skills/<module>/`: `SKILL.md`, `ARCHITECTURE.md` (a human-readable explanation of the module), `INTERLINKING.md`, `FLOWS.md`, `LESSONS.md`, and the generated `CONTRACTS.md` and `SCHEMA.md`. A skill loads by its `paths`, and the kit denies an edit under those paths until the skill is loaded. Draft them with `/kit:skills-bootstrap`; keep each one current in the change that alters its module.
+
+## Docs
+- [docs/README.md](docs/README.md) indexes every doc by reader. Decisions are ADRs in `docs/decisions/`; deploying is `docs/runbooks/deploy.md`.
+- `python3 scripts/docs-check.py` checks the docs standard; CI runs it with markdownlint, lychee and ls-lint.
+- Docs state current facts in the present tense. History lives in git and ADRs.
+
+## Gates
+- `.claude/kit.json` sets the kit's gates: the journeys a change must pass, and when a change needs an independent review.
+- lefthook runs the staged-file checks, a secret scan and the commit-message rules on every commit. Never skip them with `--no-verify`.
+- A change to gate config (`.claude/kit.json`, lint and type configs, `lefthook.yml` and `.lefthook/`, CI workflows) needs Waqar's approval.
+
+## Compact instructions
+When compacting, keep: the goal, agreed decisions and their reasons, the current step and the next steps, open questions, running agents and what each is doing, and the verify commands. Drop raw tool output and superseded drafts.

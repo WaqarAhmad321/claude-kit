@@ -1,0 +1,14 @@
+{
+  "name": "claude-kit",
+  "description": "Waqar's Claude Code kit: hooks that enforce the global rules",
+  "owner": {
+    "name": "Waqar Ahmad"
+  },
+  "plugins": [
+    {
+      "name": "kit",
+      "source": "./plugins/kit",
+      "description": "Lint ratchet on every edit, secret scan, module-skill and commit guards, and a stop gate"
+    }
+  ]
+}

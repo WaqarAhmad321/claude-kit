@@ -1,0 +1,36 @@
+name: Docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Docs standard
+        run: python3 scripts/docs-check.py
+      - name: Markdown style
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        with:
+          globs: "**/*.md"
+      - name: Links inside the repo
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          args: --offline --no-progress --exclude-path node_modules "./**/*.md"
+          failIfEmpty: false
+          jobSummary: false
+      - name: File names
+        uses: ls-lint/action@02e380fe8733d499cbfc9e22276de5085508a5bd # v2.3.1

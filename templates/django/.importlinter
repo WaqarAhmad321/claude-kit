@@ -1,0 +1,19 @@
+[importlinter]
+root_packages =
+    apps
+    config
+
+# Inside each app, views call services and selectors, services may call selectors, and models import nothing
+# above them. A layer an app doesn't have is skipped. Add contracts between apps as the boundaries settle.
+[importlinter:contract:app-layers]
+name = Each app's layers import downwards only
+type = layers
+containers =
+    apps.*
+layers =
+    (urls)
+    (views)
+    (serializers)
+    (services)
+    (selectors)
+    (models)

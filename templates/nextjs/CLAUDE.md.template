@@ -1,0 +1,13 @@
+## Stack: Next.js and Supabase
+- Next.js 16 App Router with `src/`, React 19, TypeScript strict, Tailwind, pnpm; Supabase for Postgres, auth and storage through `@supabase/ssr`. Node 24.
+- Server Components by default. Server Actions and route handlers are public endpoints: they validate with Zod and re-check the user.
+- Supabase clients come only from `src/lib/supabase/` (`server.ts`, `client.ts`); oxlint blocks `createClient` from `@supabase/supabase-js` elsewhere. Server code checks the user with `getClaims()`; only `src/proxy.ts` refreshes the session.
+- Row Level Security is on for every exposed table, with policies for `authenticated` using `(select auth.uid())`. Schema changes are migrations in `supabase/migrations/`; the security advisors run in CI.
+
+### Run and check
+- Local Supabase: `supabase start` (values for `.env` from `supabase status`), then `pnpm dev`.
+- Lint, types and format: `pnpm exec oxlint`, `pnpm exec tsc --noEmit`, `pnpm exec prettier --check .`
+- Dead code and duplicates: `pnpm exec knip`, `pnpm exec jscpd .`
+- Unit tests: `pnpm test`. Build: `pnpm exec next build`.
+- Database: `supabase db lint --local` and `supabase db advisors --local --type security`.
+- E2E per role, against local Supabase: `pnpm exec playwright test`.

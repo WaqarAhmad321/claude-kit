@@ -1,0 +1,5 @@
+# Schemathesis as an anonymous client. Every operation must answer as its schema says, and never with a 5xx.
+continue-on-failure = true
+
+[generation]
+max-examples = 50

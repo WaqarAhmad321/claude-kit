@@ -1,0 +1,68 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "nextjs", "typescript", "import", "jsx-a11y", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
+  },
+  "options": {
+    "typeAware": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": [".next/**", "node_modules/**", "next-env.d.ts", "playwright-report/**", "test-results/**"],
+  "rules": {
+    "max-lines": ["error", { "max": 250, "skipBlankLines": true, "skipComments": true }],
+    "max-lines-per-function": ["error", { "max": 60, "skipBlankLines": true, "skipComments": true }],
+    "complexity": ["error", 10],
+    "no-console": "error",
+    "eqeqeq": "error",
+    "import/no-cycle": "error",
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css", "server-only", "client-only"] }],
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/no-array-index-key": "error",
+    "react/react-in-jsx-scope": "off",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@supabase/supabase-js",
+                "importNames": ["createClient"],
+                "message": "Create Supabase clients through src/lib/supabase (server.ts, client.ts), which use @supabase/ssr and the session cookies."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/lib/supabase/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["e2e/**", "**/*.test.{ts,tsx}"],
+      "rules": {
+        "max-lines-per-function": "off"
+      }
+    }
+  ]
+}

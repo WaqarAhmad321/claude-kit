@@ -1,0 +1,11 @@
+# Schemathesis as the test stack's admin. The login runs once and its access token signs every request;
+# jwtAuth is the security scheme drf-spectacular generates for simplejwt.
+continue-on-failure = true
+
+[generation]
+max-examples = 50
+
+[auth.dynamic.openapi.jwtAuth]
+path = "/api/v1/auth/token/"
+payload = { email = "${ADMIN_EMAIL}", password = "${ADMIN_PASSWORD}" }
+extract_selector = "/access"

@@ -1,0 +1,12 @@
+## Stack: MERN
+- Express 5 API in `server/`, React 19 + Vite client in `client/`, each its own pnpm package and lockfile. MongoDB 8 through Mongoose. Node 24.
+- Server layers: routes → controllers → services → data access; only `server/src/{models,repositories,db}` import Mongoose. Parse `req.body`/`params`/`query` with Zod in the controller.
+- Client layout and data flow: `src/app/`, `src/features/<feature>/`, `src/shared/`; component → hook → `features/<feature>/api` → the shared axios instance.
+- Web auth is an HttpOnly, Secure, SameSite=Lax session cookie, set by the server. `VITE_` variables are public and built into the client bundle.
+
+### Run and check
+- Dev server: in `server/` and in `client/`, each `pnpm dev` with `.env` copied from `.env.example`.
+- Lint, types and format, in each package: `pnpm exec oxlint`, `pnpm exec tsc --noEmit`, `pnpm exec prettier --check .`
+- Unit tests, in each package: `pnpm test`. Client build: `pnpm exec vite build`.
+- Migrations, in `server/`: `pnpm exec migrate-mongo up` (and `down` to roll back), against `MONGODB_URI`.
+- Journeys and the role matrix, against the Docker test stack: `docker compose -f compose.test.yml run --build --rm journeys`. Stop it with `docker compose -f compose.test.yml down -v`.

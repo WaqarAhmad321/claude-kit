@@ -1,0 +1,32 @@
+line-length = 120
+
+[lint]
+select = [
+  "E", "W", "F", "I", "N", "UP", "B", "C4", "SIM", "RET", "PIE", "PERF", "RUF", "C90", "PL", "ERA", "BLE", "S",
+  "T20", "DJ", "ARG", "TRY", "FBT", "SLF", "TID", "PT", "DTZ", "PTH", "LOG",
+]
+ignore = [
+  # The formatter owns line length; long strings and URLs stay whole.
+  "E501",
+  # Django and DRF take a class's fields, permissions and Meta options as class-level lists.
+  "RUF012",
+  # Framework hooks keep their full signature, such as has_permission(self, request, view).
+  "ARG002",
+  # Validation and API errors carry their message where they're raised.
+  "TRY003",
+]
+
+[lint.mccabe]
+max-complexity = 10
+
+[lint.per-file-ignores]
+"**/migrations/*.py" = ["ALL"]
+# Django's generated manage.py imports inside main(); split settings build on base with a star import.
+"manage.py" = ["PLC0415"]
+"**/settings/*.py" = ["F403", "F405"]
+"**/{tests,test_*,conftest}.py" = ["S101", "S105", "S106", "PLR2004", "SLF001", "ARG001", "FBT001"]
+"**/tests/**/*.py" = ["S101", "S105", "S106", "PLR2004", "SLF001", "ARG001", "FBT001"]
+
+[format]
+docstring-code-format = true
+exclude = ["**/migrations/*.py"]

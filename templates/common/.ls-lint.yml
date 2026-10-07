@@ -1,0 +1,12 @@
+ls:
+  docs:
+    .dir: kebab-case
+    .md: kebab-case | regex:README
+  docs/decisions:
+    .md: regex:[0-9]{4}(-[a-z0-9]+)+
+  docs/api/handoffs:
+    .md: kebab-case | regex:_template
+
+ignore:
+  - .git
+  - node_modules

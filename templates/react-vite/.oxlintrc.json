@@ -1,0 +1,62 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "import", "jsx-a11y", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
+  },
+  "options": {
+    "typeAware": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "playwright-report/**", "test-results/**"],
+  "rules": {
+    "max-lines": ["error", { "max": 250, "skipBlankLines": true, "skipComments": true }],
+    "max-lines-per-function": ["error", { "max": 60, "skipBlankLines": true, "skipComments": true }],
+    "complexity": ["error", 10],
+    "no-console": "error",
+    "eqeqeq": "error",
+    "import/no-cycle": "error",
+    "import/no-named-as-default-member": "off",
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }],
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/no-array-index-key": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.tsx", "src/**/components/**", "src/**/hooks/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "axios",
+                "message": "Components and hooks call the feature's api module (features/<feature>/api), which uses the shared axios instance."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["e2e/**", "**/*.test.{ts,tsx}"],
+      "rules": {
+        "max-lines-per-function": "off"
+      }
+    }
+  ]
+}

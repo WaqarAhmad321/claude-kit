@@ -1,0 +1,130 @@
+x-server-env: &server-env
+  NODE_ENV: production
+  MONGODB_URI: mongodb://mongo:27017/app_test?replicaSet=rs0
+
+# Throwaway admin login; tests/matrix/roles.yaml and the Schemathesis service use the same one.
+x-admin: &admin
+  ADMIN_EMAIL: admin@example.test
+  ADMIN_PASSWORD: test-stack-admin-password # betterleaks:allow
+
+services:
+  mongo:
+    image: mongo:8.0.32
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    tmpfs:
+      - /data/db
+    healthcheck:
+      # The first check starts the single-node replica set that transactions need;
+      # the service turns healthy once this node is primary.
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - >-
+          let primary = false;
+          try { primary = rs.status().myState === 1 }
+          catch { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }) }
+          quit(primary ? 0 : 1)
+      interval: 2s
+      timeout: 10s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  migrate:
+    build: ./server
+    command: ["node_modules/.bin/migrate-mongo", "up"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment: *server-env
+
+  seed-admin:
+    build: ./server
+    command: ["node", "dist/cli/create-admin.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: [*server-env, *admin]
+
+  api:
+    build: ./server
+    depends_on:
+      seed-admin:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_healthy
+    environment:
+      <<: *server-env
+      PORT: "3000"
+      CORS_ORIGINS: http://localhost:5173
+      SESSION_SECRET: test-stack-only-not-a-real-secret
+      SMTP_URL: smtp://mailpit:1025
+      # The journeys and the matrix sign up many accounts from one address.
+      AUTH_RATE_LIMIT: "10000"
+      # Paid services stay off: an empty key makes the integration report itself unavailable.
+      OPENAI_API_KEY: ""
+      STRIPE_SECRET_KEY: ""
+      SENTRY_DSN: ""
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # The HTTP tests run in the api container's network, so they need only Docker, and
+  # localhost keeps curl sending the Secure session cookie over plain HTTP:
+  # docker compose -f compose.test.yml run --build --rm journeys
+  role-matrix:
+    profiles: [tests]
+    build:
+      context: ./server
+      target: role-matrix
+    network_mode: service:api
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./tests/matrix:/matrix:ro
+    command: ["/matrix/roles.yaml", "http://localhost:3000"]
+
+  journeys:
+    profiles: [tests]
+    image: ghcr.io/orange-opensource/hurl:8.0.1
+    network_mode: service:api
+    depends_on:
+      role-matrix:
+        condition: service_completed_successfully
+    volumes:
+      - ./journeys:/journeys:ro
+    command: ["--test", "--variables-file", "/journeys/vars.env", "/journeys"]
+
+  # Schemathesis once per role against the generated schema, outside the journeys gate:
+  # docker compose -f compose.test.yml run --rm schemathesis-admin
+  schemathesis-anonymous: &schemathesis
+    profiles: [fuzz]
+    image: schemathesis/schemathesis:v4.28.0
+    network_mode: service:api
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./tests/schemathesis:/schemathesis:ro
+    command: ["--config-file=/schemathesis/anonymous.toml", "run", "http://localhost:3000/api/openapi.json"]
+
+  schemathesis-admin:
+    <<: *schemathesis
+    environment:
+      <<: *admin
+    command: ["--config-file=/schemathesis/admin.toml", "run", "http://localhost:3000/api/openapi.json"]

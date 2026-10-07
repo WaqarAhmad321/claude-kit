@@ -1,0 +1,13 @@
+pre-commit:
+  jobs:
+    # Before `uv add` creates the project, there is no ruff to run.
+    - name: python lint
+      glob: "**/*.py"
+      skip:
+        - run: test ! -f uv.lock
+      run: uv run --frozen ruff check --force-exclude {staged_files}
+    - name: python format
+      glob: "**/*.py"
+      skip:
+        - run: test ! -f uv.lock
+      run: uv run --frozen ruff format --check --force-exclude {staged_files}

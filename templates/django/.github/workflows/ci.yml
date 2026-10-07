@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app_test"
+          --health-interval 2s --health-timeout 5s --health-retries 30
+      redis:
+        image: redis:8.10.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DATABASE_URL: postgis://app:app@localhost:5432/app_test
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: 0.12.21
+          enable-cache: true
+      - name: GDAL for GeoDjango
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gdal-bin
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Types
+        run: uv run mypy .
+      - name: Import layers
+        run: uv run lint-imports
+      - name: Migrations are complete
+        run: uv run python manage.py makemigrations --check --dry-run
+      - name: Tests
+        run: uv run pytest
+      - name: Production settings pass the deploy check
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          ALLOWED_HOSTS: api.example.test
+        run: |
+          SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(64))')
+          export SECRET_KEY
+          uv run python manage.py check --deploy --fail-level WARNING
+      - name: The committed OpenAPI schema is current
+        run: |
+          uv run python manage.py spectacular --file docs/api/openapi.yaml --validate --fail-on-warn
+          git diff --exit-code -- docs/api/openapi.yaml
+
+  api-contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: No breaking API change
+        uses: oasdiff/oasdiff-action/breaking@b9325c9e0a27ab65b0da3b766522cedec6be81dc # v0.1.18
+        with:
+          base: origin/${{ github.base_ref }}:docs/api/openapi.yaml
+          revision: HEAD:docs/api/openapi.yaml
+          fail-on: ERR
+          review: false
+          github-token: ""
+
+  journeys:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: docker compose -f compose.test.yml run --build --rm journeys
+      - name: Stack logs
+        if: failure()
+        run: docker compose -f compose.test.yml logs
+      - name: Stop the stack
+        if: always()
+        run: docker compose -f compose.test.yml down -v
+
+  supply-chain:
+    runs-on: ubuntu-24.04
+    env:
+      BETTERLEAKS_VERSION: 1.9.0
+      BETTERLEAKS_SHA256: f8b185a39ffcece2a1ca82bf3a4e7435cd81963ffd16b7a9128daf75f35f6de7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Betterleaks
+        run: |
+          archive="betterleaks_${BETTERLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/$archive"
+          echo "$BETTERLEAKS_SHA256  $RUNNER_TEMP/$archive" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" betterleaks
+      - name: Secrets in history
+        run: '"$RUNNER_TEMP/betterleaks" git --redact --no-banner'
+      - name: Known vulnerabilities in dependencies
+        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0

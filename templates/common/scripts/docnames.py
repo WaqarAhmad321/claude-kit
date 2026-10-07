@@ -1,0 +1,1 @@
+../../../plugins/kit/hooks/bin/docnames.py

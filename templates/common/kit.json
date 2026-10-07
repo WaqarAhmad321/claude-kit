@@ -1,0 +1,10 @@
+{
+  "gate": {
+    "review": {
+      "min_lines": 50
+    }
+  },
+  "docs": {
+    "allowed": []
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+playwright/.auth/
+playwright-report/
+test-results/
+supabase/.temp/
+supabase/.branches/

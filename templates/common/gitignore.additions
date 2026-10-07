@@ -1,0 +1,9 @@
+.env*
+!.env.example
+.claude/settings.local.json
+.claude/worktrees/
+.worktrees/
+CLAUDE.local.md
+.archify/
+*.tsbuildinfo
+.claude/HANDOFF.md

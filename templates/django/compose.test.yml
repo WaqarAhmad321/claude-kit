@@ -1,0 +1,137 @@
+x-api-env: &api-env
+  DJANGO_SETTINGS_MODULE: config.settings.test
+  SECRET_KEY: changeme-test-stack-only
+  ALLOWED_HOSTS: localhost,127.0.0.1
+  DATABASE_URL: postgis://app:app@db:5432/app_test
+  REDIS_URL: redis://redis:6379/0
+  EMAIL_URL: smtp://mailpit:1025
+  # Paid services stay off: an empty key makes the integration report itself unavailable,
+  # and config/settings/test.py refuses to start while any of them is set.
+  OPENAI_API_KEY: ""
+  GOOGLE_MAPS_API_KEY: ""
+  TWILIO_AUTH_TOKEN: ""
+  SENTRY_DSN: ""
+
+# The throwaway admin login; tests/matrix/roles.yaml and the Schemathesis service use the same one.
+x-admin: &admin
+  ADMIN_EMAIL: admin@example.test
+  ADMIN_PASSWORD: changeme-test-stack-admin # betterleaks:allow
+
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app_test
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "app", "-d", "app_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:8.10.2-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  migrate:
+    build:
+      context: .
+      target: runtime
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: *api-env
+
+  seed:
+    build:
+      context: .
+      target: runtime
+    command: ["python", "manage.py", "seed_test_accounts"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: [*api-env, *admin]
+
+  api:
+    build:
+      context: .
+      target: runtime
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    environment: *api-env
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/', timeout=3)"
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # The HTTP tests run in the api container's network, so they need only Docker:
+  # docker compose -f compose.test.yml run --build --rm journeys
+  role-matrix:
+    profiles: [tests]
+    build:
+      context: .
+      target: test
+    network_mode: service:api
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: [*api-env, *admin]
+      MATRIX_FILE: tests/matrix/roles.yaml
+      MATRIX_BASE_URL: http://localhost:8000
+
+  journeys:
+    profiles: [tests]
+    image: ghcr.io/orange-opensource/hurl:8.0.1
+    network_mode: service:api
+    depends_on:
+      role-matrix:
+        condition: service_completed_successfully
+    volumes:
+      - ./journeys:/journeys:ro
+    command: ["--test", "--variables-file", "/journeys/vars.env", "/journeys"]
+
+  # Schemathesis once per role against the generated schema, outside the journeys gate:
+  # docker compose -f compose.test.yml run --rm schemathesis-admin
+  schemathesis-anonymous: &schemathesis
+    profiles: [fuzz]
+    image: schemathesis/schemathesis:v4.28.0
+    network_mode: service:api
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./tests/schemathesis:/schemathesis:ro
+    command: ["--config-file=/schemathesis/anonymous.toml", "run", "http://localhost:8000/api/schema/"]
+
+  schemathesis-admin:
+    <<: *schemathesis
+    environment:
+      <<: *admin
+    command: ["--config-file=/schemathesis/admin.toml", "run", "http://localhost:8000/api/schema/"]

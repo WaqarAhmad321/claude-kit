@@ -1,0 +1,9 @@
+{
+  "threshold": 1,
+  "minTokens": 50,
+  "minLines": 5,
+  "format": ["typescript", "tsx", "javascript", "jsx", "css"],
+  "ignore": ["**/node_modules/**", "**/dist/**", "**/playwright-report/**", "**/test-results/**"],
+  "gitignore": true,
+  "reporters": ["console"]
+}

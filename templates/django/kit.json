@@ -1,0 +1,29 @@
+{
+  "gate": {
+    "journeys": {
+      "command": "docker compose -f compose.test.yml run --build --rm journeys",
+      "watch": [
+        "apps/**",
+        "config/**",
+        "manage.py",
+        "pyproject.toml",
+        "uv.lock",
+        "Dockerfile",
+        "compose.test.yml",
+        "journeys/**",
+        "tests/matrix/**"
+      ]
+    },
+    "review": {
+      "always": [
+        "**/auth/**",
+        "**/*permission*",
+        "**/payments/**",
+        "**/billing/**",
+        "**/*security*",
+        "**/migrations/**",
+        "config/settings/**"
+      ]
+    }
+  }
+}

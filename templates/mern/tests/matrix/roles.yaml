@@ -1,0 +1,43 @@
+# Expected status for every operation and role, run by server/test/role-matrix.ts against the test stack
+# (the role-matrix service in compose.test.yml).
+# A `user` role is a fresh signup, `admin` logs in the admin the test stack seeds, and null is anonymous.
+# Each cell gets a fresh fixture from the fixture's owner, so a DELETE in one cell can't change another.
+# The runner fails on any other status and on any 5xx.
+auth:
+  signup: /api/auth/signup
+  login: /api/auth/login
+  admin:
+    email: admin@example.test
+    password: test-stack-admin-password # betterleaks:allow
+
+roles:
+  anonymous: null
+  owner: user
+  other_user: user
+  admin: admin
+
+fixtures:
+  note:
+    as: owner
+    request: POST /api/notes
+    body: { title: Matrix note, body: Created by the owner }
+
+operations:
+  - request: GET /api/notes
+    expect: { anonymous: 401, owner: 200, other_user: 200, admin: 200 }
+  - request: POST /api/notes
+    body: { title: Matrix note }
+    expect: { anonymous: 401, owner: 201, other_user: 201, admin: 201 }
+  - request: GET /api/notes/{note.id}
+    expect: { anonymous: 401, owner: 200, other_user: 404, admin: 404 }
+  - request: PATCH /api/notes/{note.id}
+    content_type: application/merge-patch+json
+    body: { title: Renamed }
+    expect: { anonymous: 401, owner: 200, other_user: 404, admin: 404 }
+  - request: PUT /api/notes/{note.id}
+    body: { title: Replaced }
+    expect: { anonymous: 401, owner: 405, other_user: 405, admin: 405 }
+  - request: DELETE /api/notes/{note.id}
+    expect: { anonymous: 401, owner: 204, other_user: 404, admin: 404 }
+  - request: GET /api/admin/users
+    expect: { anonymous: 401, owner: 403, other_user: 403, admin: 200 }

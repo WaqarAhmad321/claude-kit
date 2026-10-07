@@ -1,0 +1,74 @@
+{
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "Organization: solo freelancer (Waqar Ahmad, SolDev) building client and personal web apps: Django/DRF APIs, React/Vite admin portals, Next.js/Supabase apps",
+      "Source control: github.com/WaqarAhmad321 (personal) and client organisations on GitHub. Pushing feature branches is routine; force-pushing, or pushing directly to a client repo's main branch, is not",
+      "Hosting and cloud: Vercel, Supabase, Dokploy on a VPS, AWS on client projects",
+      "Local development: localhost, 127.0.0.1 and docker compose service names (db, redis, web, worker) are development environments, unless the project's .env points them at a remote database",
+      "Sensitive data: .env files, .claude/settings.local.json, anything holding tokens or API keys, and client user data",
+      "Sensitive remote targets: any host, database or container whose name carries prod or production, client production domains, and remote database URLs found in .env files"
+    ]
+  },
+  "permissions": {
+    "additionalDirectories": [
+      "$KIT_WORK_DIR"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Edit(.claude/settings.local.json)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git -C * push --force*)",
+      "Bash(git -C * push -f*)",
+      "Bash(git -C * push * --force*)",
+      "Bash(git -C * push * -f*)",
+      "Bash(git add -f *)",
+      "Bash(git add --force *)",
+      "Bash(claude plugin disable*)",
+      "Bash(claude plugins disable*)",
+      "Bash(claude plugin uninstall*)",
+      "Bash(claude plugins uninstall*)",
+      "Bash(claude plugin remove*)",
+      "Bash(claude plugins remove*)",
+      "Bash(claude plugin marketplace remove*)",
+      "Bash(claude plugin marketplace rm*)",
+      "Bash(claude plugins marketplace remove*)",
+      "Bash(claude plugins marketplace rm*)"
+    ],
+    "ask": [
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)"
+    ]
+  },
+  "outputStyle": "Product level",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/kit-hooks/style-reminder.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(Edit|Write|NotebookEdit|Bash|PowerShell|Monitor|Read|Grep|Glob|LSP|WebFetch|WebSearch|ReadMcpResourceTool|mcp__.*)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/kit-hooks/orchestrator_guard.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

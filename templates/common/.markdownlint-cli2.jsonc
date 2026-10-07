@@ -1,0 +1,20 @@
+{
+  "config": {
+    "default": true,
+    // Prose wraps where the writer wants it; tables and links don't wrap at all.
+    "MD013": false,
+    // Repeated headings are fine under different parents, such as "Verify" in each phase.
+    "MD024": { "siblings_only": true },
+    // A heading's list, table or code block starts on the next line, with no blank line between.
+    "MD022": false,
+    "MD031": false,
+    "MD032": false,
+    "MD058": false,
+    // Tables pad their cells but not the separator row: | Name | What | over |---|---|.
+    "MD060": false
+  },
+  "globs": ["**/*.md"],
+  "gitignore": true,
+  // Generated files carry their generator's formatting.
+  "ignores": ["node_modules/**", "**/CONTRACTS.md", "**/SCHEMA.md"]
+}

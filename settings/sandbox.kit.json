@@ -1,0 +1,88 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "excludedCommands": [
+      "docker *",
+      "docker-compose *",
+      "herdr *",
+      "gh *",
+      "git push *",
+      "git pull *",
+      "git fetch *",
+      "git ls-remote *",
+      "git -C * push",
+      "git -C * push *",
+      "git -C * pull",
+      "git -C * pull *",
+      "git -C * fetch",
+      "git -C * fetch *",
+      "git -C * ls-remote",
+      "git -C * ls-remote *",
+      "git clone *",
+      "git submodule *",
+      "git add *",
+      "git status*",
+      "mise install *",
+      "mise use *",
+      "claude *",
+      "hurl *",
+      "uv run pytest*",
+      "uv run python manage.py *",
+      "python manage.py *",
+      "pnpm exec playwright *",
+      "npx playwright *",
+      "curl http://localhost:*",
+      "curl http://127.0.0.1:*"
+    ],
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "*.github.com",
+        "*.githubusercontent.com",
+        "registry.npmjs.org",
+        "*.npmjs.org",
+        "pypi.org",
+        "*.pythonhosted.org",
+        "context7.com",
+        "*.context7.com",
+        "fonts.googleapis.com",
+        "fonts.gstatic.com",
+        "*.supabase.co"
+      ]
+    },
+    "credentials": {
+      "files": [
+        {
+          "path": "~/.ssh",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.aws/credentials",
+          "mode": "deny"
+        }
+      ]
+    },
+    "filesystem": {
+      "allowWrite": [
+        "~/.npm",
+        "~/.local/share/pnpm",
+        "~/.cache/pnpm",
+        "~/.cache/uv",
+        "~/.cache/pip",
+        "~/.cache/ms-playwright"
+      ],
+      "denyWrite": [
+        "$KIT_DIR/home",
+        "$KIT_DIR/plugins",
+        "$KIT_DIR/settings",
+        "$KIT_DIR/scripts",
+        "$KIT_DIR/templates",
+        "$KIT_DIR/install.sh",
+        "$KIT_DIR/.githooks",
+        "$KIT_DIR/.claude-plugin",
+        "$KIT_GIT_DIR/hooks",
+        "$KIT_GIT_DIR/config"
+      ]
+    }
+  }
+}

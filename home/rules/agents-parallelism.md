@@ -1,0 +1,16 @@
+# Maximize subagents and parallelism — keep the main chat unblocked
+
+Default to delegating work instead of doing it inline in the main conversation. The main chat is for coordinating, deciding, and reporting — not for grinding through long tool loops.
+
+## Rules
+
+1. **Delegate searches and research to subagents.** Any broad codebase exploration, multi-file reading, log digging, or web research goes to an Agent (Explore/general-purpose/fork) — not run inline. Keep only the conclusions in the main context.
+2. **Fan out independent work in parallel.** When tasks don't depend on each other (multiple files to fix, multiple things to investigate, multiple services to check), spawn multiple agents in a single message so they run concurrently. Never do sequentially what can run in parallel.
+3. **Long-running commands go to the background.** Builds, test suites, installs, deploys, dev servers: `run_in_background` — then keep working on something else instead of waiting. Never sit idle waiting on a command when other progress is possible.
+4. **Big implementation chunks go to agents too.** For multi-part features, split the parts across agents (worktree isolation when they touch the same repo) and integrate/review their results in the main chat.
+5. **The main chat must stay responsive.** If a step would occupy the main thread for a long time, hand it off (agent, background task, or parallel session) and report progress instead. I should always be able to talk to you while work is running.
+6. **No floor in the main conversation.** In the main chat, everything hands-on is delegated, even a one-line edit or a single short command (orchestrator mode: a hook denies main-thread tool calls unless Waqar has turned on direct mode). Answering a direct question from what's already known needs no tools and stays in the chat. Inside a subagent, small steps are done directly; a subagent spawns further agents only for genuinely parallel or long-running pieces.
+7. **Give a helper its own on-disk copy, never a temp one.** When an agent needs a separate checkout of a repo, keep it inside the project folder — Claude Code's own `--worktree` / `isolation: "worktree"` already does this, at `.claude/worktrees/<name>/` under the repo root — never under `/tmp`, which is wiped on restart. A helper commits each finished piece on its own branch as it goes, for restart safety; that branch merges into the working branch only after its review passes. Builders commit only when the brief says so, and push only when the brief says so — in a client repo, commits stay local and pushing is Waqar's call.
+8. **Reach another folder without `cd`.** Use `git -C <dir> …` or absolute paths, one plain command per call: a `cd`, a redirect or a `$(…)` keeps the whole call in the sandbox, so `gh` and `git push`/`fetch`/`pull` fail there and retry with a prompt.
+
+**Why:** Waqar runs many projects at once and wants wall-clock speed and an always-available main chat, at the cost of extra tokens. Tool calls and code detail in the main chat made it messy and tiring to follow; he'd rather plan there and hand clear briefs to fresh subagents. When in doubt between "do it inline" and "delegate/parallelize," choose delegate.

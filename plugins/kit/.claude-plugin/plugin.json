@@ -1,0 +1,9 @@
+{
+  "name": "kit",
+  "description": "Lint ratchet on every edit, secret scan, module-skill and commit guards, and a stop gate",
+  "author": {
+    "name": "Waqar Ahmad"
+  },
+  "repository": "https://github.com/WaqarAhmad321/claude-kit",
+  "keywords": ["hooks", "lint", "guardrails"]
+}

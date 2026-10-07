@@ -1,0 +1,39 @@
+---
+paths:
+  - "**/manage.py"
+  - "**/settings*.py"
+  - "**/settings/**/*.py"
+  - "**/models.py"
+  - "**/models/**/*.py"
+  - "**/views*.py"
+  - "**/views/**/*.py"
+  - "**/serializers*.py"
+  - "**/serializers/**/*.py"
+  - "**/services*.py"
+  - "**/services/**/*.py"
+  - "**/selectors*.py"
+  - "**/urls.py"
+  - "**/signals.py"
+  - "**/tasks.py"
+  - "**/permissions.py"
+  - "**/admin.py"
+  - "**/migrations/*.py"
+  - "**/apps/**/*.py"
+---
+# Django / DRF
+
+- Views stay thin: parse input, call a service or selector, serialize the result. Writes live in services (`<entity>_<action>`, keyword-only, typed); non-trivial reads live in selectors. Serializers, tasks and signal receivers stay thin too.
+- Serializers validate shape and formats. Business rules and invariants live in services and database constraints, because tasks, admin and management commands bypass serializers.
+- Serializers list `fields` explicitly, never `"__all__"`. Ownership, role, status and other privileged fields are read-only.
+- PATCH uses `partial=True`; only keys present in `validated_data` change, a missing field means unchanged (read it from `self.instance`), and the save uses `update_fields`.
+- `QuerySet.update()`, `bulk_create` and `bulk_update` skip `save()`, signals and `auto_now`. Fire the side effects (cache invalidation, audit log) explicitly.
+- Signals only for decoupled concerns such as cache invalidation, never for core business flow.
+- No N+1: `select_related` / `prefetch_related` for every relation a serializer reads, `.only()` or `.values()` when few fields are needed, indexes on fields you filter or order by. List endpoints assert their query count in tests.
+- Multi-row writes run in `transaction.atomic()`. External side effects (email, webhooks, tasks) go in `transaction.on_commit`. Don't catch exceptions inside an atomic block.
+- Read-modify-write uses `F()` expressions or `select_for_update()`.
+- Celery tasks take IDs, call services, and are idempotent.
+- Datetimes are timezone-aware (`django.utils.timezone.now()`). PostGIS points are (lon, lat) with SRID 4326; filter spatially in the database.
+- No `null=True` on string fields; every model has `__str__`.
+- Settings are split per environment (base, local, production). Required values have no defaults, `DEBUG` defaults to False, and production passes `manage.py check --deploy --fail-level WARNING`.
+- One concern per migration. Apply it forward, backward and forward again on a scratch database before merging.
+- Endpoint tests go through real HTTP against the running stack, or at least `APIClient` with a real JWT login (`client.credentials(HTTP_AUTHORIZATION=...)`). Never `APIRequestFactory` or `force_authenticate` for endpoint tests: they skip URL routing, middleware and authentication.

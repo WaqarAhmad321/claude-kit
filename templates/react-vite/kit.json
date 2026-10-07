@@ -1,0 +1,20 @@
+{
+  "gate": {
+    "journeys": {
+      "command": "pnpm exec playwright test",
+      "watch": [
+        "src/**",
+        "e2e/**",
+        "index.html",
+        "public/**",
+        "vite.config.ts",
+        "playwright.config.ts",
+        "package.json",
+        "pnpm-lock.yaml"
+      ]
+    },
+    "review": {
+      "always": ["**/auth/**", "**/*permission*", "**/payments/**", "**/billing/**", "**/*security*", "src/shared/api/**"]
+    }
+  }
+}

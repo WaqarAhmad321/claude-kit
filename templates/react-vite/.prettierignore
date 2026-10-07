@@ -1,0 +1,6 @@
+dist
+pnpm-lock.yaml
+playwright-report
+test-results
+# markdownlint owns the Markdown.
+*.md

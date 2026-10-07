@@ -1,0 +1,83 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "promise"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**"],
+  "rules": {
+    "eqeqeq": "error",
+    "no-console": "error",
+    "no-underscore-dangle": ["error", { "allow": ["_id"] }],
+    "import/no-cycle": "error",
+    "node/no-process-env": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "mongoose",
+            "message": "Only src/models, src/repositories and src/db talk to MongoDB."
+          },
+          {
+            "name": "mongodb",
+            "message": "Only src/models, src/repositories and src/db talk to MongoDB."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/services/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "mongoose",
+                "message": "Services call repositories; they don't import MongoDB."
+              },
+              {
+                "name": "mongodb",
+                "message": "Services call repositories; they don't import MongoDB."
+              },
+              { "name": "express", "message": "Services don't know about HTTP; controllers do." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/models/**", "src/repositories/**", "src/db/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          { "paths": [{ "name": "express", "message": "The data layer doesn't know about HTTP." }] }
+        ]
+      }
+    },
+    {
+      "files": ["src/config.ts", "migrate-mongo-config.js"],
+      "rules": {
+        "node/no-process-env": "off"
+      }
+    }
+  ]
+}

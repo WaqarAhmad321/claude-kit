@@ -1,0 +1,27 @@
+pre-commit:
+  jobs:
+    # Before `pnpm install`, there is no oxlint or Prettier to run.
+    - name: server lint
+      root: server/
+      glob: "server/**/*.{ts,mts,cts,js,mjs,cjs}"
+      skip:
+        - run: test ! -d server/node_modules
+      run: pnpm exec oxlint {staged_files}
+    - name: server format
+      root: server/
+      glob: "server/**/*.{ts,mts,cts,js,mjs,cjs,json,md}"
+      skip:
+        - run: test ! -d server/node_modules
+      run: pnpm exec prettier --check {staged_files}
+    - name: client lint
+      root: client/
+      glob: "client/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+      skip:
+        - run: test ! -d client/node_modules
+      run: pnpm exec oxlint {staged_files}
+    - name: client format
+      root: client/
+      glob: "client/**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,md,html}"
+      skip:
+        - run: test ! -d client/node_modules
+      run: pnpm exec prettier --check {staged_files}

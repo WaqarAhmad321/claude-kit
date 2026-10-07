@@ -1,0 +1,3 @@
+#!/bin/sh
+# Keep GitHub current: push every commit.
+git push --quiet origin HEAD 2>/dev/null || echo "claude-kit: push failed; it will go out with the next commit (or run: git push)" >&2

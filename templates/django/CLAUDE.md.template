@@ -1,0 +1,15 @@
+## Stack: Django and DRF
+- Python 3.13 with uv, Django 5.2 LTS and DRF, PostgreSQL with PostGIS, Redis. Apps live in `apps/<app>/`, settings in `config/settings/`.
+- Settings are split: `base.py` is shared and its required values have no defaults; `local.py` holds dev defaults; `production.py` holds none; `test.py` holds throwaway values and refuses to start while any paid API key is set.
+- Inside an app, views call services for writes and selectors for reads. import-linter keeps each app's layers importing downwards (`.importlinter`).
+- The OpenAPI schema is generated into `docs/api/openapi.yaml` and committed with every API change; CI fails on a stale copy or a breaking change.
+
+### Run and check
+- Dev server: `uv run python manage.py runserver`, with `.env` copied from `.env.example`.
+- Lint and format: `uv run ruff check .` and `uv run ruff format --check .`
+- Types and layers: `uv run mypy .` and `uv run lint-imports`
+- Tests: `uv run pytest`
+- Journeys and the role matrix, against the Docker test stack: `docker compose -f compose.test.yml run --build --rm journeys`. Stop it with `docker compose -f compose.test.yml down -v`.
+- Schemathesis per role: `docker compose -f compose.test.yml run --rm schemathesis-admin` (and `schemathesis-anonymous`).
+- Schema: `uv run python manage.py spectacular --file docs/api/openapi.yaml --validate`
+- Migrations: `uv run python manage.py makemigrations --check --dry-run`. Apply a new one forward, backward and forward again on a scratch database before merging.

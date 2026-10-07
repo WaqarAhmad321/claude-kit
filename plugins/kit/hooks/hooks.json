@@ -1,0 +1,241 @@
+{
+  "description": "kit: lint ratchet, secret scan, module-skill, commit and docs guards, stop gate with review check, handoff and compaction helpers",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "session_context"],
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "inject_handoff"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "session_context"],
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "snapshot_before_edit"],
+            "timeout": 60,
+            "statusMessage": "kit: recording the lint baseline"
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "scan_secrets"],
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "guard_module_skill"],
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "guard_protected_files"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "guard_docs_location"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "scan_secrets"],
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "guard_protected_bash"],
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "guard_docs_location"],
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "guard_commit"],
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "lint_edited_file"],
+            "timeout": 120,
+            "statusMessage": "kit: linting the edited file"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "record_skill_seen"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "record_journey_pass"],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "SubagentHandback",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "record_review"],
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "UserPromptExpansion": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "record_skill_seen"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "record_skill_seen", "--compact"],
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "log_compact"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "stop_gate"],
+            "timeout": 600,
+            "statusMessage": "kit: running the stop gate"
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "stop_module_skills"],
+            "timeout": 60,
+            "statusMessage": "kit: checking changed files against module skills"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "stop_gate"],
+            "timeout": 600,
+            "statusMessage": "kit: running the stop gate"
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "stop_module_skills"],
+            "timeout": 60,
+            "statusMessage": "kit: checking changed files against module skills"
+          }
+        ]
+      },
+      {
+        "matcher": "^(reviewer|kit:reviewer|kit-reviewer)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/bin/run_hook.py", "record_review"],
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}

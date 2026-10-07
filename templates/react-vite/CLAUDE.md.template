@@ -1,0 +1,12 @@
+## Stack: React and Vite
+- React 19, Vite, TypeScript strict, TanStack Query, react-hook-form with Zod, Tailwind and shadcn, pnpm. Node 24.
+- Layout: `src/app/` (providers, router), `src/features/<feature>/` (`api/`, `components/`, `hooks/`), `src/shared/` (ui, lib, the one axios instance in `shared/api/`). Features don't import each other.
+- Data flows component → hook → `features/<feature>/api` → the shared axios instance. Components and hooks never import axios; oxlint blocks it.
+- `VITE_` variables are public and built into the bundle. The backend's `docs/api/openapi.yaml` and handoffs are the contract.
+
+### Run and check
+- Dev server: `pnpm dev`, with `.env` copied from `.env.example`.
+- Lint, types and format: `pnpm exec oxlint`, `pnpm exec tsc -b`, `pnpm exec prettier --check .`
+- Dead code and duplicates: `pnpm exec knip`, `pnpm exec jscpd .`
+- Unit tests: `pnpm test`. Build: `pnpm exec vite build`.
+- E2E per role, against the backend's test stack: `pnpm exec playwright test`. The logins come from `E2E_*` in `.env`.

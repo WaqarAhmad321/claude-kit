@@ -1,0 +1,12 @@
+# Schemathesis as the test stack's admin. The login runs once and its Set-Cookie session signs every request;
+# sessionAuth is the apiKey-in-cookie security scheme the generated schema declares for the session cookie.
+continue-on-failure = true
+
+[generation]
+max-examples = 50
+
+[auth.dynamic.openapi.sessionAuth]
+path = "/api/auth/login"
+payload = { email = "${ADMIN_EMAIL}", password = "${ADMIN_PASSWORD}" }
+extract_from = "cookie"
+extract_selector = "session"

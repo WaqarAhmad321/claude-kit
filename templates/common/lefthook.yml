@@ -1,0 +1,54 @@
+glob_matcher: doublestar
+
+# Each stack pack adds its lint and format jobs in .lefthook/<stack>.yml.
+extends:
+  - .lefthook/*.yml
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: secrets
+      run: betterleaks git --staged --redact --no-banner
+    - name: forbidden paths
+      glob:
+        - "**/.env"
+        - "**/.env.*"
+        - "**/.claude/settings.local.json"
+        - "**/*.{pem,p12,pfx,key}"
+        - "**/id_{rsa,ecdsa,ed25519}"
+      exclude:
+        - "**/.env.example"
+      run: |
+        echo "Don't commit {staged_files}: they hold secrets or local settings."
+        echo "Unstage them with 'git restore --staged <file>' and add them to .gitignore."
+        exit 1
+    - name: size
+      run: |
+        lines=$(git diff --cached --numstat -- . \
+          ':(glob,exclude)**/*.lock' ':(glob,exclude)**/*-lock.json' ':(glob,exclude)**/*-lock.yaml' \
+          ':(glob,exclude)**/migrations/**' \
+          | awk '$1 != "-" { total += $1 + $2 } END { print total + 0 }')
+        if [ "$lines" -gt 600 ]; then
+          echo "This commit changes $lines lines, lockfiles and migrations aside. About 600 is the soft cap: split it if it holds more than one concern."
+        fi
+
+commit-msg:
+  jobs:
+    - name: conventional commit
+      run: |
+        subject=$(head -n 1 {1})
+        case "$subject" in "Merge "*|"Revert \""*|"fixup! "*|"squash! "*) exit 0 ;; esac
+        if ! printf '%s\n' "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9./-]+\))?!?: [a-z0-9]'; then
+          echo "The subject must be a lowercase Conventional Commit, e.g. 'fix(notes): keep the body on partial update'."
+          exit 1
+        fi
+        if [ ${#subject} -gt 72 ]; then
+          echo "The subject is ${#subject} characters long; keep it to 72."
+          exit 1
+        fi
+    - name: no ai attribution
+      run: |
+        if grep -Eiq '^[[:space:]]*co-authored-by[[:space:]]*[:=]|generated (with|by|using).*(claude|anthropic|chatgpt|openai|copilot|gemini)|noreply@anthropic\.com' {1}; then
+          echo "Remove the co-author or AI attribution line from the commit message."
+          exit 1
+        fi

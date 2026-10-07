@@ -1,0 +1,27 @@
+---
+name: {module}
+description: Rules for the {module} module ({what it owns, in a few words}). Use before changing {the files or behaviour it covers}.
+paths:
+  - "{app or feature folder}/**"
+---
+
+# {Module}
+
+{One or two lines: what this module owns and who calls it.}
+
+## Invariants
+- {A rule that must always hold, with the symbol that enforces it: `apps/{module}/services.py:{function}`.}
+
+## Settled decisions
+- {Decision}: {why}. {ADR link, if there is one.}
+
+## Read next
+| When you change | Read |
+|---|---|
+| The API | `CONTRACTS.md`, then `FLOWS.md` |
+| Models or migrations | `SCHEMA.md`, then `INTERLINKING.md` |
+| Its structure, data or connections | `ARCHITECTURE.md` |
+| Anything a past bug touched | `LESSONS.md` |
+
+## Verify
+- {The journeys and tests that cover this module, as commands.}

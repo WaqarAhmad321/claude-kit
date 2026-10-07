@@ -1,0 +1,12 @@
+{
+  "docs": {
+    "allowed": [
+      "home/CLAUDE.md",
+      "home/rules/*.md",
+      "home/output-styles/*.md",
+      "plugins/kit/agents/*.md",
+      "plugins/kit/skills/**"
+    ],
+    "ignore": ["templates/**", "plugins/kit/skills/*/templates/**", "plugins/kit/tests/**"]
+  }
+}

@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+settings.local.json
+__pycache__/
+*.pyc
+.pytest_cache/
+.worktrees/
+# Claude Code's sandbox masks this path with /dev/null, which git then lists as untracked.
+/.mcp.json
