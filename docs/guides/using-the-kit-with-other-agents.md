@@ -52,7 +52,7 @@ Claude Code (v2.1.277+) can read `AGENTS.md` natively. A setting (`/config` → 
 
 ## Recommended project setup
 
-The commands below run the kit's scripts from its checkout. `${CLAUDE_PLUGIN_ROOT}` is set for the plugin's own hooks, not in your shell, so find the checkout the way the scripts do: the repo `~/.claude/rules` links into (`$CLAUDE_CONFIG_DIR/rules` when that's set), which is `~/Work/personal-projects/claude-kit` after a standard install. Failing that, it's the `installLocation` of the `claude-kit` entry in `~/.claude/plugins/known_marketplaces.json`.
+The commands below run the kit's scripts from its checkout. `${CLAUDE_PLUGIN_ROOT}` is set for the plugin's own hooks, not in your shell, so find the checkout the way the scripts do: the repo `~/.claude/rules` links into (`$CLAUDE_CONFIG_DIR/rules` when that's set), which is the folder you cloned the kit into. Failing that, it's the `installLocation` of the `claude-kit` entry in `~/.claude/plugins/known_marketplaces.json`.
 
 ```
 KIT="$(git -C "$(readlink -f "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/rules")" rev-parse --show-toplevel)"

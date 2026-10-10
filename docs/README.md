@@ -1,8 +1,9 @@
 # claude-kit docs
 
 ## Using the kit
-- [README](../README.md): what the kit is, how to install it, and where each part lives.
-- [Install or update on a machine](runbooks/deploy.md), with verify and rollback steps.
+- [README](../README.md): what the kit fixes, and a quickstart from install to a first task.
+- [How it works](guides/how-it-works.md): the agents, the workflow, every enforced rule, agent safety, testing, stack packs, escape hatches and the repo layout.
+- [Install or update on a machine](runbooks/deploy.md): what `install.sh` changes, with verify and rollback steps.
 - [The task workflow](../home/rules/workflow.md): task sizes, steps and approval points. The playbook is the [workflow skill](../plugins/kit/skills/workflow/SKILL.md).
 - [Using the kit with other agents](guides/using-the-kit-with-other-agents.md): what Codex, Cursor, Gemini CLI, OpenCode and Copilot pick up, and how to set lefthook and CI as the shared enforcement layer.
 
